@@ -18,17 +18,24 @@ export default {
 
     const description = `**Message:** ${content}\n**Attachments:** ${
       attachments || "None"
-    }**Channel:** <#${message.channel.id}>`;
+    }`;
 
     const embed = new EmbedBuilder()
       .setTitle("Message Deleted")
       .setColor(0xff0000)
       .setDescription(description)
-      .addFields({
-        name: "User",
-        value: message.author?.tag ?? "Unknown",
-        inline: true,
-      })
+      .addFields(
+        {
+          name: "User",
+          value: message.author?.tag ?? "Unknown",
+          inline: true,
+        },
+        {
+          name: "Channel",
+          value: `<#${message.channel.id}>`,
+          inline: true,
+        }
+      )
       .setTimestamp();
 
     await logChannel.send({ embeds: [embed] });
