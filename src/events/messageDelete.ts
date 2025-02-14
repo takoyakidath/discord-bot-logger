@@ -18,7 +18,7 @@ export default {
 
     const description = `**Message:** ${content}\n**Attachments:** ${
       attachments || "None"
-    }`;
+    }**Channel:** <#${message.channel.id}>`;
 
     const embed = new EmbedBuilder()
       .setTitle("Message Deleted")
