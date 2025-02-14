@@ -4,19 +4,31 @@ import logger from "~/utils/logger";
 export default {
   name: Events.MessageDelete,
   async execute(message: Message): Promise<void> {
+    if (!message.guild) return;
     const channelId = process.env.CHANNEL_ID;
-    if (!channelId || !message.guild) return;
+    if (!channelId) return;
     const logChannel = message.guild.channels.cache.get(channelId);
     if (!logChannel || !logChannel.isTextBased()) return;
 
-    const content = message.content || "Message with attachments only";
+    const content = message.content || "None";
+    let attachments = "";
+    if (message.attachments.size > 0) {
+      attachments = message.attachments.map((att) => att.url).join("\n");
+    }
+
+    const description = `**Message:** ${content}\n**Attachments:** ${
+      attachments || "None"
+    }`;
+
     const embed = new EmbedBuilder()
       .setTitle("Message Deleted")
       .setColor(0xff0000)
-      .addFields(
-        { name: "User", value: message.author?.tag ?? "Unknown" },
-        { name: "Content", value: content }
-      )
+      .setDescription(description)
+      .addFields({
+        name: "User",
+        value: message.author?.tag ?? "Unknown",
+        inline: true,
+      })
       .setTimestamp();
 
     await logChannel.send({ embeds: [embed] });
