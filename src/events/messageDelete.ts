@@ -5,6 +5,13 @@ export default {
   name: Events.MessageDelete,
   async execute(message: Message): Promise<void> {
     if (!message.guild) return;
+
+    // If the sender is a bot, the process is aborted.
+    if (message.author?.bot) return;
+
+    // If the message contains an embed, the process is aborted.
+    if (message.embeds.length > 0) return;
+
     const channelId = process.env.CHANNEL_ID;
     if (!channelId) return;
     const logChannel = message.guild.channels.cache.get(channelId);
