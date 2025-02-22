@@ -18,67 +18,46 @@ export default {
     if (!logChannel || !logChannel.isTextBased()) return;
 
     const content = message.content || "None";
-    let attachmentsInfo = "";
-    let attachmentFiles: { attachment: Buffer; name: string }[] = [];
 
-    // If there are attachments, create a list of URLs and get the files in memory.
-    if (message.attachments.size > 0) {
-      attachmentsInfo = message.attachments.map((att) => att.url).join("\n");
-
-      attachmentFiles = (
-        await Promise.all(
-          message.attachments.map(async (attachment) => {
-            try {
-              const response = await fetch(attachment.url);
-              if (!response.ok) {
-                throw new Error(
-                  `Failed to fetch attachment: ${attachment.url}`
-                );
-              }
-              const arrayBuffer = await response.arrayBuffer();
-              const buffer = Buffer.from(arrayBuffer);
-              return {
-                attachment: buffer,
-                name: attachment.name || "attachment",
-              };
-            } catch (error) {
-              logger.error(
-                message.author?.id,
-                `Error fetching attachment ${attachment.url}: ${error}`
-              );
-              return null;
-            }
-          })
-        )
-      ).filter(
-        (file): file is { attachment: Buffer; name: string } => file !== null
+    // Extract only images from attachments (if contentType is available or determine by extension)
+    const imageAttachments = message.attachments.filter((attachment) => {
+      return (
+        (attachment.contentType &&
+          attachment.contentType.startsWith("image/")) ||
+        /\.(jpg|jpeg|png|gif)$/i.test(attachment.url)
       );
-    }
+    });
+    const imageUrls = imageAttachments.map((att) => att.url);
+    const attachmentsInfo = imageUrls.join("\n") || "None";
 
-    const description = `**Message:** ${content}\n**Attachments:** ${
-      attachmentsInfo || "None"
-    }`;
+    const description = `**Message:** ${content}\n**Image Attachments:** ${attachmentsInfo}`;
 
-    const embed = new EmbedBuilder()
+    const embeds = [];
+    const mainEmbed = new EmbedBuilder()
       .setTitle("Message Deleted")
       .setColor(0xff0000)
       .setDescription(description)
       .addFields(
-        {
-          name: "User",
-          value: message.author?.tag ?? "Unknown",
-          inline: true,
-        },
-        {
-          name: "Channel",
-          value: `<#${message.channel.id}>`,
-          inline: true,
-        }
+        { name: "User", value: message.author?.tag ?? "Unknown", inline: true },
+        { name: "Channel", value: `<#${message.channel.id}>`, inline: true }
       )
       .setTimestamp();
 
-    // If there are attachments, send them as files.
-    await logChannel.send({ embeds: [embed], files: attachmentFiles });
+    // If there is only one image, set it to the image of the main embed
+    if (imageUrls.length === 1) {
+      mainEmbed.setImage(imageUrls[0]);
+    }
+    embeds.push(mainEmbed);
+
+    // If there are multiple images, create an embed for each image (display all separately from the main embed)
+    if (imageUrls.length > 1) {
+      for (const url of imageUrls) {
+        const imageEmbed = new EmbedBuilder().setColor(0xff0000).setImage(url);
+        embeds.push(imageEmbed);
+      }
+    }
+
+    await logChannel.send({ embeds });
     logger.info(message.author?.id, "The message has been deleted.");
   },
 };
