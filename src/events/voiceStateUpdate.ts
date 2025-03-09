@@ -15,11 +15,11 @@ export default {
     if (!oldState.channelId && newState.channelId) {
       // User joined a voice channel
       logMsg = `New user joined a voice channel`;
-      embedDescription = `${newState.member?.user.tag} joined ${newState.channel?.name}`;
+      embedDescription = `${newState.member?.user.username} (<@${newState.member?.user.id}>) joined ${newState.channel?.name}`;
     } else if (oldState.channelId && !newState.channelId) {
       // User left a voice channel
       logMsg = `User left a voice channel`;
-      embedDescription = `${oldState.member?.user.tag} left ${oldState.channel?.name}`;
+      embedDescription = `${oldState.member?.user.username} (<@${oldState.member?.user.id}>) left ${oldState.channel?.name}`;
     } else if (
       oldState.channelId &&
       newState.channelId &&
@@ -27,7 +27,7 @@ export default {
     ) {
       // User moved to another voice channel
       logMsg = `User moved to another voice channel`;
-      embedDescription = `${newState.member?.user.tag} moved from ${oldState.channel?.name} to ${newState.channel?.name}`;
+      embedDescription = `${newState.member?.user.username} (<@${newState.member?.user.id}>) moved from ${oldState.channel?.name} (<#${oldState.channelId}>) to ${newState.channel?.name} (<#${newState.channelId}>)`;
     }
 
     if (logMsg && embedDescription) {

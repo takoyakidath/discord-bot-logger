@@ -49,7 +49,9 @@ export default {
       });
     }
 
-    embed.setTitle(`Update for ${newMember.user.tag}`);
+    embed.setTitle(
+      `Update for ${newMember.user.username} (<@${newMember.user.id}>)`
+    );
 
     await logChannel.send({ embeds: [embed] });
     logger.info(newMember.user.id, "Guild member update logged.");

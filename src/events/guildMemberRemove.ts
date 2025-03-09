@@ -26,9 +26,9 @@ export default {
           .setTitle("Member Kicked")
           .setColor(0xffa500)
           .setDescription(
-            `${member.user.tag} (${member.user.id}) was kicked.\nReason: ${
-              kickLog.reason || "No reason provided"
-            }`
+            `${member.user.username} (<@${
+              member.user.id
+            }>) was kicked.\nReason: ${kickLog.reason || "No reason provided"}`
           )
           .setTimestamp();
         await logChannel.send({ embeds: [embed] });
@@ -43,7 +43,9 @@ export default {
     const embed = new EmbedBuilder()
       .setTitle("Member Left")
       .setColor(0xff0000)
-      .setDescription(`${member.user.tag} left the server.`)
+      .setDescription(
+        `${member.user.username} (<@${member.user.id}>) left the server.`
+      )
       .setTimestamp();
     await logChannel.send({ embeds: [embed] });
     logger.info(member.user.id, "Member left logged.");

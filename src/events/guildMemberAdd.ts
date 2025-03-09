@@ -12,7 +12,9 @@ export default {
     const embed = new EmbedBuilder()
       .setTitle("Member Joined")
       .setColor(0x00ff00)
-      .setDescription(`${member.user.tag} joined the server.`)
+      .setDescription(
+        `${member.user.username} (<@${member.user.id}>) joined the server.`
+      )
       .setTimestamp();
 
     await logChannel.send({ embeds: [embed] });

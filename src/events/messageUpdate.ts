@@ -32,7 +32,11 @@ export default {
       .addFields(
         {
           name: "User",
-          value: newMessage.author ? newMessage.author.tag : "Unknown",
+          value: newMessage.author
+            ? `${newMessage.author.username ?? "Unknown"} (<@${
+                newMessage.author.id
+              }>)`
+            : "Unknown",
           inline: true,
         },
         { name: "Channel", value: newMessage.channel.toString(), inline: true },

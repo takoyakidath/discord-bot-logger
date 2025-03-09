@@ -38,7 +38,13 @@ export default {
       .setColor(0xff0000)
       .setDescription(description)
       .addFields(
-        { name: "User", value: message.author?.tag ?? "Unknown", inline: true },
+        {
+          name: "User",
+          value: `${message.author.username ?? "Unknown"} (<@${
+            message.author.id
+          }>)`,
+          inline: true,
+        },
         { name: "Channel", value: `<#${message.channel.id}>`, inline: true }
       )
       .setTimestamp();
