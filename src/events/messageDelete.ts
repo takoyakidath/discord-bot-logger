@@ -1,4 +1,10 @@
-import { EmbedBuilder, Events, type Message } from "discord.js";
+import {
+  AttachmentBuilder,
+  EmbedBuilder,
+  Events,
+  type Message,
+} from "discord.js";
+import { get } from "https";
 import logger from "~/utils/logger";
 
 export default {
@@ -27,9 +33,38 @@ export default {
         /\.(jpg|jpeg|png|gif)$/i.test(attachment.url)
       );
     });
-    const imageUrls = imageAttachments.map((att) => att.url);
-    const attachmentsInfo = imageUrls.join("\n") || "None";
+    // Download and re-upload images
+    const reuploadedUrls = [];
+    for (const attachment of imageAttachments.values()) {
+      try {
+        const imageData = await new Promise<Buffer>((resolve, reject) => {
+          get(attachment.url, (res) => {
+            const chunks: Buffer[] = [];
+            res.on("data", (chunk) => chunks.push(Buffer.from(chunk)));
+            res.on("end", () => resolve(Buffer.concat(chunks)));
+            res.on("error", reject);
+          }).on("error", reject);
+        });
 
+        const filename =
+          attachment.name ||
+          "image." + (attachment.contentType?.split("/")[1] || "png");
+        const attachmentBuilder = new AttachmentBuilder(imageData as Buffer, {
+          name: filename,
+        });
+        const message = await logChannel.send({ files: [attachmentBuilder] });
+        const newUrl = message.attachments.first()?.url;
+        if (newUrl) reuploadedUrls.push(newUrl);
+      } catch (error: unknown) {
+        logger.error(
+          "Failed to re-upload image:",
+          error instanceof Error ? error.message : String(error)
+        );
+        reuploadedUrls.push(attachment.url); // Fallback to original URL if re-upload fails
+      }
+    }
+
+    const attachmentsInfo = reuploadedUrls.join("\n") || "None";
     const description = `**Message:** ${content}\n**Image Attachments:** ${attachmentsInfo}`;
 
     const embeds = [];
@@ -50,14 +85,14 @@ export default {
       .setTimestamp();
 
     // If there is only one image, set it to the image of the main embed
-    if (imageUrls.length === 1) {
-      mainEmbed.setImage(imageUrls[0]);
+    if (reuploadedUrls.length === 1) {
+      mainEmbed.setImage(reuploadedUrls[0]);
     }
     embeds.push(mainEmbed);
 
     // If there are multiple images, create an embed for each image (display all separately from the main embed)
-    if (imageUrls.length > 1) {
-      for (const url of imageUrls) {
+    if (reuploadedUrls.length > 1) {
+      for (const url of reuploadedUrls) {
         const imageEmbed = new EmbedBuilder().setColor(0xff0000).setImage(url);
         embeds.push(imageEmbed);
       }
