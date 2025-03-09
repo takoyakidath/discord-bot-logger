@@ -33,8 +33,12 @@ export default {
         /\.(jpg|jpeg|png|gif)$/i.test(attachment.url)
       );
     });
-    // Download and re-upload images
-    const reuploadedUrls = [];
+    // Download and prepare images
+    interface ImageData {
+      buffer: Buffer;
+      filename: string;
+    }
+    const imageDataArray: ImageData[] = [];
     for (const attachment of imageAttachments.values()) {
       try {
         const imageData = await new Promise<Buffer>((resolve, reject) => {
@@ -49,22 +53,19 @@ export default {
         const filename =
           attachment.name ||
           "image." + (attachment.contentType?.split("/")[1] || "png");
-        const attachmentBuilder = new AttachmentBuilder(imageData as Buffer, {
-          name: filename,
-        });
-        const message = await logChannel.send({ files: [attachmentBuilder] });
-        const newUrl = message.attachments.first()?.url;
-        if (newUrl) reuploadedUrls.push(newUrl);
+
+        // Store the image data for later upload
+        imageDataArray.push({ buffer: imageData, filename });
       } catch (error: unknown) {
         logger.error(
-          "Failed to re-upload image:",
+          "Failed to download image:",
           error instanceof Error ? error.message : String(error)
         );
-        reuploadedUrls.push(attachment.url); // Fallback to original URL if re-upload fails
       }
     }
 
-    const attachmentsInfo = reuploadedUrls.join("\n") || "None";
+    const hasImages = imageDataArray.length > 0;
+    const attachmentsInfo = hasImages ? "Image in thread." : "None";
     const description = `**Message:** ${content}\n**Image Attachments:** ${attachmentsInfo}`;
 
     const embeds = [];
@@ -84,21 +85,24 @@ export default {
       )
       .setTimestamp();
 
-    // If there is only one image, set it to the image of the main embed
-    if (reuploadedUrls.length === 1) {
-      mainEmbed.setImage(reuploadedUrls[0]);
-    }
     embeds.push(mainEmbed);
 
-    // If there are multiple images, create an embed for each image (display all separately from the main embed)
-    if (reuploadedUrls.length > 1) {
-      for (const url of reuploadedUrls) {
-        const imageEmbed = new EmbedBuilder().setColor(0xff0000).setImage(url);
-        embeds.push(imageEmbed);
+    const mainMessage = await logChannel.send({ embeds: [mainEmbed] });
+
+    // If there are images, create a thread and upload them there
+    if (hasImages) {
+      const thread = await mainMessage.startThread({
+        name: "Deleted Message Images",
+      });
+
+      // Upload all images to the thread
+      for (const { buffer, filename } of imageDataArray) {
+        const attachmentBuilder = new AttachmentBuilder(buffer, {
+          name: filename,
+        });
+        await thread.send({ files: [attachmentBuilder] });
       }
     }
-
-    await logChannel.send({ embeds });
     logger.info(message.author?.id, "The message has been deleted.");
   },
 };
