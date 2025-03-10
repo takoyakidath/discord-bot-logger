@@ -26,22 +26,12 @@ export default {
     const content = message.content || "None";
 
     // Extract only images from attachments (if contentType is available or determine by extension)
-    const imageAttachments = message.attachments.filter((attachment) => {
-      return (
-        (attachment.contentType &&
-          attachment.contentType.startsWith("image/")) ||
-        /\.(jpg|jpeg|png|gif)$/i.test(attachment.url)
-      );
-    });
-    // Download and prepare images
-    interface ImageData {
-      buffer: Buffer;
-      filename: string;
-    }
-    const imageDataArray: ImageData[] = [];
-    for (const attachment of imageAttachments.values()) {
+    const fileAttachments = [...message.attachments.values()];
+    // Download and prepare files
+    const fileDataArray: { buffer: Buffer; filename: string }[] = [];
+    for (const attachment of fileAttachments) {
       try {
-        const imageData = await new Promise<Buffer>((resolve, reject) => {
+        const fileBuffer = await new Promise<Buffer>((resolve, reject) => {
           get(attachment.url, (res) => {
             const chunks: Buffer[] = [];
             res.on("data", (chunk) => chunks.push(Buffer.from(chunk)));
@@ -52,10 +42,10 @@ export default {
 
         const filename =
           attachment.name ||
-          "image." + (attachment.contentType?.split("/")[1] || "png");
+          "file." + (attachment.contentType?.split("/")[1] || "bin");
 
         // Store the image data for later upload
-        imageDataArray.push({ buffer: imageData, filename });
+        fileDataArray.push({ buffer: fileBuffer, filename });
       } catch (error: unknown) {
         logger.error(
           "Failed to download image:",
@@ -64,9 +54,9 @@ export default {
       }
     }
 
-    const hasImages = imageDataArray.length > 0;
-    const attachmentsInfo = hasImages ? "Image in thread." : "None";
-    const description = `**Message:** ${content}\n**Image Attachments:** ${attachmentsInfo}`;
+    const hasFiles = fileDataArray.length > 0;
+    const attachmentsInfo = hasFiles ? "Files in thread." : "None";
+    const description = `**Message:** ${content}\n**Attachments:** ${attachmentsInfo}`;
 
     const embeds = [];
     const mainEmbed = new EmbedBuilder()
@@ -89,14 +79,14 @@ export default {
 
     const mainMessage = await logChannel.send({ embeds: [mainEmbed] });
 
-    // If there are images, create a thread and upload them there
-    if (hasImages) {
+    // If there are files, create a thread and upload them there
+    if (hasFiles) {
       const thread = await mainMessage.startThread({
         name: "Deleted Message Images",
       });
 
       // Upload all images to the thread
-      for (const { buffer, filename } of imageDataArray) {
+      for (const { buffer, filename } of fileDataArray) {
         const attachmentBuilder = new AttachmentBuilder(buffer, {
           name: filename,
         });
