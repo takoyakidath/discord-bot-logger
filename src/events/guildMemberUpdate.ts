@@ -21,11 +21,34 @@ export default {
     const newNickname = newMember.nickname || newMember.user.username;
     const nicknameChanged = oldNickname !== newNickname;
 
+    const oldTimeout = oldMember.communicationDisabledUntilTimestamp;
+    const newTimeout = newMember.communicationDisabledUntilTimestamp;
+    const hasTimeoutChanged = oldTimeout !== newTimeout;
+
     // Do nothing if there are no changes
-    if (addedRoles.size === 0 && removedRoles.size === 0 && !nicknameChanged)
+    if (
+      addedRoles.size === 0 &&
+      removedRoles.size === 0 &&
+      !nicknameChanged &&
+      !hasTimeoutChanged
+    )
       return;
 
     const embed = new EmbedBuilder().setColor(0x00ffff).setTimestamp();
+
+    if (hasTimeoutChanged) {
+      if (newTimeout && newTimeout > Date.now()) {
+        embed.addFields({
+          name: "Timeout",
+          value: `User timed out until <t:${Math.floor(newTimeout / 1000)}:F>.`,
+        });
+      } else if (oldTimeout && oldTimeout > Date.now()) {
+        embed.addFields({
+          name: "Timeout",
+          value: "User is no longer timed out.",
+        });
+      }
+    }
 
     if (addedRoles.size > 0) {
       embed.addFields({
