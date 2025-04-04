@@ -16,8 +16,6 @@
     "lint": "biome lint ./src",
     "register": "tsx src/register.ts",
     "start": "node dist/index.js",
-    "test": "vitest",
-    "test:watch": "vitest --watch",
     "typecheck": "tsc --noEmit",
     "rm": "node scripts/rm.js"
   },
@@ -42,9 +40,7 @@
     "lint-staged": "^15.5.0",
     "tsc-alias": "^1.8.11",
     "tsx": "^4.19.3",
-    "typescript": "5.8.2",
-    "vite-tsconfig-paths": "^5.1.4",
-    "vitest": "^3.0.9"
+    "typescript": "5.8.2"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
