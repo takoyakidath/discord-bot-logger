@@ -2,12 +2,14 @@ import {
   type ChatInputCommandInteraction,
   EmbedBuilder,
   SlashCommandBuilder,
+  PermissionFlagsBits,
 } from "discord.js";
 
 export default {
   data: new SlashCommandBuilder()
     .setName("ping")
-    .setDescription("Returns the response speed to the server."),
+    .setDescription("Returns the response speed to the server.")
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 
   async execute(interaction: ChatInputCommandInteraction) {
     try {
