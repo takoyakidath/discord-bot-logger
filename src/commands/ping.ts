@@ -2,13 +2,12 @@ import {
   type ChatInputCommandInteraction,
   EmbedBuilder,
   SlashCommandBuilder,
-} from 'discord.js';
-import { COLOR } from '~/config';
+} from "discord.js";
 
 export default {
   data: new SlashCommandBuilder()
-    .setName('ping')
-    .setDescription('Returns the response speed to the server.'),
+    .setName("ping")
+    .setDescription("Returns the response speed to the server."),
 
   async execute(interaction: ChatInputCommandInteraction) {
     try {
@@ -16,8 +15,8 @@ export default {
       ping = Math.min(ping > 0 ? ping : 0, 999);
 
       const embed = new EmbedBuilder()
-        .setColor(COLOR.PRIMARY)
-        .setTitle('Pong!')
+        .setColor("#ffffff")
+        .setTitle("Pong!")
         .setDescription(`WebSocket Ping: ${ping}ms\nAPI Endpoint Ping: ...`);
       const msg = await interaction.reply({
         embeds: [embed],
@@ -26,11 +25,11 @@ export default {
 
       const apiPing = Math.min(
         msg.createdTimestamp - interaction.createdTimestamp,
-        999,
+        999
       );
 
       embed.setDescription(
-        `WebSocket Ping: ${ping}ms\nAPI Endpoint Ping: ${apiPing}ms`,
+        `WebSocket Ping: ${ping}ms\nAPI Endpoint Ping: ${apiPing}ms`
       );
       await interaction.editReply({ embeds: [embed] });
     } catch (err: any) {
