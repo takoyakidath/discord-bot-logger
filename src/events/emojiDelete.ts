@@ -1,4 +1,11 @@
-import { Events, GuildEmoji, EmbedBuilder, TextChannel } from "discord.js";
+import {
+  Events,
+  GuildEmoji,
+  EmbedBuilder,
+  TextChannel,
+  AttachmentBuilder,
+} from "discord.js";
+import { get } from "https";
 import logger from "~/utils/logger";
 
 export default {
@@ -12,21 +19,46 @@ export default {
     ) as TextChannel;
     if (!logChannel) return;
 
-    let details = "";
-
-    // Add emoji details
-    details += `・Name: **${emoji.name}**\n`;
-    details += `・Animated: **${emoji.animated ? "Yes" : "No"}**\n`;
-    details += `・ID: **${emoji.id}**\n`;
+    const details = [
+      `・Name: **${emoji.name}**`,
+      `・Animated: **${emoji.animated ? "Yes" : "No"}**`,
+      `・ID: **${emoji.id}**`,
+    ].join("\n");
 
     const embed = new EmbedBuilder()
       .setTitle("Emoji Deleted")
       .setColor(0xff0000)
       .setDescription(details)
-      .setImage(emoji.url)
       .setTimestamp();
 
-    await logChannel.send({ embeds: [embed] });
+    const mainMessage = await logChannel.send({ embeds: [embed] });
+
+    try {
+      // Download emoji image
+      const fileBuffer = await new Promise<Buffer>((resolve, reject) => {
+        get(emoji.url, (res) => {
+          const chunks: Buffer[] = [];
+          res.on("data", (chunk) => chunks.push(Buffer.from(chunk)));
+          res.on("end", () => resolve(Buffer.concat(chunks)));
+          res.on("error", reject);
+        }).on("error", reject);
+      });
+
+      // Create thread and upload emoji
+      const thread = await mainMessage.startThread({
+        name: "Deleted Emoji Image",
+      });
+
+      const attachment = new AttachmentBuilder(fileBuffer, {
+        name: `${emoji.name}.${emoji.animated ? "gif" : "png"}`,
+      });
+      await thread.send({ files: [attachment] });
+    } catch (error: unknown) {
+      logger.error(
+        "Failed to download emoji:",
+        error instanceof Error ? error.message : String(error)
+      );
+    }
     logger.info(emoji.id, "Emoji deletion logged.");
   },
 };
