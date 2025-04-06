@@ -20,8 +20,6 @@ export default {
     ) as TextChannel;
     if (!logChannel) return;
 
-    console.log("Channel update event triggered");
-
     let details = "";
     const changes: string[] = [];
 
