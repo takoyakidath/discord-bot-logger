@@ -22,6 +22,7 @@ export default {
       `・Name: **${emoji.name}**`,
       `・Animated: **${emoji.animated ? "Yes" : "No"}**`,
       `・ID: **${emoji.id}**`,
+      `・Created by: **${emoji.author?.username}** (<@${emoji.author?.id}>)`,
     ].join("\n");
 
     const embed = new EmbedBuilder()
