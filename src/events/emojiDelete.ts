@@ -36,7 +36,7 @@ export default {
     try {
       // Download emoji image
       const fileBuffer = await new Promise<Buffer>((resolve, reject) => {
-        get(emoji.url, (res) => {
+        get(emoji.imageURL(), (res) => {
           const chunks: Buffer[] = [];
           res.on("data", (chunk) => chunks.push(Buffer.from(chunk)));
           res.on("end", () => resolve(Buffer.concat(chunks)));

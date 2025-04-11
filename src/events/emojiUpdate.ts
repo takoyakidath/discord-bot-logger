@@ -30,7 +30,7 @@ export default {
       .setTitle("Emoji Updated")
       .setColor(0xffaa00)
       .setDescription(details)
-      .setThumbnail(newEmoji.url)
+      .setThumbnail(newEmoji.imageURL())
       .setTimestamp();
 
     await logChannel.send({ embeds: [embed] });
